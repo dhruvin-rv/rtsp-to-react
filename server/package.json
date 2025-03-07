@@ -14,6 +14,8 @@
     "jade": "~1.11.0",
     "morgan": "~1.9.1",
     "node-rtsp-stream": "0.0.9",
-    "rtsp-streaming-server": "^2.1.0"
+    "rtsp-streaming-server": "^2.1.0",
+    "wrtc": "^0.4.7",
+    "ws": "^8.18.1"
   }
 }

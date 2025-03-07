@@ -4,13 +4,44 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var cors = require('cors')
+const WebSocket = require("ws");
+const { RTCPeerConnection, RTCSessionDescription } = require("wrtc");
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 const run = require('./rtsp_server');
 const { feedVideoToRTSP } = require('./rtsp_stream');
+const { getMediaStream } = require('./web_rtc_stream');
 
 var app = express();
+const server = require("http").createServer(app);
+exports.wss = new WebSocket.Server({ server });
+
+wss.on("connection", (socket) => {
+  socket.on("message", async (message) => {
+    const data = JSON.parse(message);
+
+    if (data.type === "offer") {
+      broadcaster = socket;
+
+      const peer = new RTCPeerConnection();
+      const stream = getMediaStream();
+
+      stream.getTracks().forEach((track) => peer.addTrack(track, stream));
+
+      peer.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.send(JSON.stringify({ type: "candidate", candidate: event.candidate }));
+        }
+      };
+
+      const answer = await peer.createAnswer();
+      await peer.setLocalDescription(answer);
+
+      socket.send(JSON.stringify({ type: "answer", answer }));
+    }
+  });
+});
 
 app.use(cors())
 
